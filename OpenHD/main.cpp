@@ -73,7 +73,7 @@ struct OHDRunOptions {
   bool run_as_air = false;
   bool reset_all_settings = false;
   bool no_qopenhd_autostart=false;
-  int run_time_seconds = -1;  //-1= infinite, only usefully for debugging
+  int run_time_seconds = -1;  //-1= infinite, only useful for debugging
   // Specify the hardware.config file, otherwise,
   // the default location (and default values if no file exists at the default
   // location) is used
@@ -345,7 +345,7 @@ int main(int argc, char *argv[]) {
             std::chrono::seconds(options.run_time_seconds)) {
           m_console->warn("Terminating, exceeded run time {}",
                           options.run_time_seconds);
-          // we can just break out any time, usefully for checking memory leaks
+          // we can just break out any time, useful for checking memory leaks
           // and more.
           break;
         }

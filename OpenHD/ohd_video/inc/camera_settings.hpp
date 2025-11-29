@@ -63,7 +63,7 @@ static constexpr int OPENHD_FLIP_VERTICAL_AND_HORIZONTAL = 3;
 // (non-deterministic)
 struct CameraSettings {
   // Enable / Disable streaming for this camera
-  // This can be usefully for debugging, but also when the there is suddenly a
+  // This can be useful for debugging, but also when the there is suddenly a
   // really high interference, and the user wants to fly home without video,
   // using only telemetry / HUD. Default to true, otherwise we'd have conflicts
   // with the "always a picture without changing any settings" paradigm.

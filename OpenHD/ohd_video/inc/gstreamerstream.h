@@ -34,7 +34,7 @@
 
 #include "camera_settings.hpp"
 #include "camerastream.h"
-#include "gst_bitrate_controll_wrapper.hpp"
+#include "gst_bitrate_control_wrapper.hpp"
 #include "openhd_platform.h"
 #include "openhd_spdlog.h"
 // #include "gst_recorder.h"

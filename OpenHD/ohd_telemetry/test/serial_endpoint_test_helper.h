@@ -40,7 +40,7 @@ static const struct option long_options[] = {
 struct SerialOptions {
   std::string filename = "/dev/ttyACM0";
   int baud_rate = 115200;
-  bool flow_controll = false;
+  bool flow_control = false;
 };
 
 static SerialOptions parse_args(int argc, char *argv[]) {

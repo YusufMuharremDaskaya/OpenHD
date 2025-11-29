@@ -27,7 +27,7 @@
 
 static void test_execute_commands() {
   // We do echo 1, but the method should return "0" which stands for
-  // command succesfully executed
+  // command successfully executed
   auto res = OHDUtil::run_command("echo", {"1"});
   std::cout << "Res is:" << res << "\n";
   if (res != 0) {
