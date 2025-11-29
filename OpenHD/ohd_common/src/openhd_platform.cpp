@@ -27,6 +27,7 @@
 #include <iostream>
 #include <regex>
 #include <set>
+#include <unordered_map>
 
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
@@ -251,42 +252,34 @@ std::string x_platform_type_to_string(int platform_type) {
   }
 }
 
+// Lookup table for FEC max block size per platform type
+static const std::unordered_map<int, int> kFecMaxBlockSizeByPlatform = {
+    {X_PLATFORM_TYPE_RPI_4, 50},
+    {X_PLATFORM_TYPE_RPI_CM4, 50},
+    {X_PLATFORM_TYPE_RPI_OLD, 30},
+    {X_PLATFORM_TYPE_X86, 80},
+    {X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W, 20},
+    {X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3, 20},
+    {X_PLATFORM_TYPE_ROCKCHIP_RV1103, 20},
+    {X_PLATFORM_TYPE_ROCKCHIP_RV1106, 20},
+    {X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A, 20},
+    {X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B, 20},
+    {X_PLATFORM_TYPE_ALWINNER_X20, 20},
+    {X_PLATFORM_TYPE_NVIDIA_XAVIER, 50},
+    {X_PLATFORM_TYPE_WILLY, 50},
+    {X_PLATFORM_TYPE_QUALCOMM_QRB5165, 50},
+    {X_PLATFORM_TYPE_QUALCOMM_QCS405, 50},
+};
+
+static constexpr int kDefaultFecMaxBlockSize = 20;
+
 int get_fec_max_block_size_for_platform() {
-  auto platform_type = OHDPlatform::instance().platform_type;
-
-  if (platform_type == X_PLATFORM_TYPE_RPI_4 ||
-      platform_type == X_PLATFORM_TYPE_RPI_CM4) {
-    return 50;
+  const auto platform_type = OHDPlatform::instance().platform_type;
+  const auto it = kFecMaxBlockSizeByPlatform.find(platform_type);
+  if (it != kFecMaxBlockSizeByPlatform.end()) {
+    return it->second;
   }
-  if (platform_type == X_PLATFORM_TYPE_RPI_OLD) {
-    return 30;
-  }
-  if (platform_type == X_PLATFORM_TYPE_X86) {
-    return 80;
-  }
-  if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
-      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3 ||
-      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1103 ||
-      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1106 ||
-      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A ||
-      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
-    return 20;
-  }
-  if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
-    return 20;
-  }
-  if (platform_type == X_PLATFORM_TYPE_NVIDIA_XAVIER) {
-    return 50;
-  }
-  if (platform_type == X_PLATFORM_TYPE_WILLY) {
-    return 50;
-  }
-  if (platform_type == X_PLATFORM_TYPE_QUALCOMM_QRB5165 ||
-      platform_type == X_PLATFORM_TYPE_QUALCOMM_QCS405) {
-    return 50;
-  }
-
-  return 20;
+  return kDefaultFecMaxBlockSize;
 }
 
 // OHDPlatform methods

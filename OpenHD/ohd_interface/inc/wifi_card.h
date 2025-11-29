@@ -26,6 +26,7 @@
 
 #include <fstream>
 #include <string>
+#include <unordered_set>
 
 #include "openhd_platform.h"
 #include "openhd_util.h"
@@ -160,40 +161,61 @@ struct WiFiCard {
   };
 };
 
+// Sets of WiFiCardTypes that support specific capabilities
+namespace wifi_card_capabilities {
+
+// Cards that support variable MCS index
+static const std::unordered_set<WiFiCardType> kSupportsVariableMcs = {
+    WiFiCardType::OPENHD_EMULATED,
+    WiFiCardType::OPENHD_RTL_88X2AU,
+    WiFiCardType::OPENHD_RTL_88X2BU,
+    WiFiCardType::OPENHD_RTL_88X2CU,
+    WiFiCardType::OPENHD_RTL_88X2EU,
+    WiFiCardType::OPENHD_RTL_8852BU,
+    WiFiCardType::QUALCOMM,
+};
+
+// Cards that support 5MHz channel width injection
+static const std::unordered_set<WiFiCardType> kSupports5MhzChannelWidth = {
+    WiFiCardType::QUALCOMM,
+};
+
+// Cards that support 10MHz channel width injection
+static const std::unordered_set<WiFiCardType> kSupports10MhzChannelWidth = {
+    WiFiCardType::QUALCOMM,
+    WiFiCardType::OPENHD_RTL_88X2EU,
+};
+
+// Cards that support 40MHz channel width injection
+static const std::unordered_set<WiFiCardType> kSupports40MhzChannelWidth = {
+    WiFiCardType::OPENHD_EMULATED,
+    WiFiCardType::OPENHD_RTL_88X2AU,
+    WiFiCardType::OPENHD_RTL_88X2BU,
+    WiFiCardType::OPENHD_RTL_88X2CU,
+    WiFiCardType::OPENHD_RTL_88X2EU,
+    WiFiCardType::OPENHD_RTL_8852BU,
+    WiFiCardType::QUALCOMM,
+};
+
+}  // namespace wifi_card_capabilities
+
 static bool wifi_card_supports_variable_mcs(const WiFiCard& wifi_card) {
-  if (wifi_card.type == WiFiCardType::OPENHD_EMULATED) return true;
-  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2AU) return true;
-  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2BU) return true;
-  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2CU) return true;
-  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2EU) return true;
-  if (wifi_card.type == WiFiCardType::OPENHD_RTL_8852BU) return true;
-  if (wifi_card.type == WiFiCardType::QUALCOMM) return true;
-  return false;
+  return wifi_card_capabilities::kSupportsVariableMcs.count(wifi_card.type) > 0;
 }
 
 static bool wifi_card_supports_5Mhz_channel_width_injection(
     const WiFiCard& wifi_card) {
-  if (wifi_card.type == WiFiCardType::QUALCOMM) return true;
-  return false;
+  return wifi_card_capabilities::kSupports5MhzChannelWidth.count(wifi_card.type) > 0;
 }
 
 static bool wifi_card_supports_10Mhz_channel_width_injection(
     const WiFiCard& wifi_card) {
-  if (wifi_card.type == WiFiCardType::QUALCOMM) return true;
-  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2EU) return true;
-  return false;
+  return wifi_card_capabilities::kSupports10MhzChannelWidth.count(wifi_card.type) > 0;
 }
 
 static bool wifi_card_supports_40Mhz_channel_width_injection(
     const WiFiCard& wifi_card) {
-  if (wifi_card.type == WiFiCardType::OPENHD_EMULATED) return true;
-  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2AU) return true;
-  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2BU) return true;
-  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2CU) return true;
-  if (wifi_card.type == WiFiCardType::OPENHD_RTL_88X2EU) return true;
-  if (wifi_card.type == WiFiCardType::OPENHD_RTL_8852BU) return true;
-  if (wifi_card.type == WiFiCardType::QUALCOMM) return true;
-  return false;
+  return wifi_card_capabilities::kSupports40MhzChannelWidth.count(wifi_card.type) > 0;
 }
 
 static bool wifi_card_supports_frequency(const WiFiCard& wifi_card,
