@@ -286,7 +286,7 @@ CameraRegistry::CameraRegistry() {
       X_CAM_TYPE_ROCK_5_IMX415, "ROCK_5_IMX415", CameraFamily::ROCKCHIP_5,
       CameraPipelineType::ROCKCHIP_5_MPP,
       make_resolutions({{1280, 720, 30},
-                        {1280, 720, 30},
+                        {1280, 720, 60},
                         {1920, 1080, 30},
                         {3864, 2192, 30}})));
 
