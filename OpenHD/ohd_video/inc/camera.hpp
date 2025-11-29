@@ -29,6 +29,7 @@
 #include <regex>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 #include "camera_info.hpp"
@@ -290,6 +291,30 @@ static std::optional<ResolutionFramerate> parse_video_format(
 //
 // Used in QOpenHD UI
 //
+// Lookup table for resolution names (width, height) -> display name
+namespace resolution_names {
+struct ResolutionKey {
+  int width;
+  int height;
+  bool operator==(const ResolutionKey& other) const {
+    return width == other.width && height == other.height;
+  }
+};
+
+struct ResolutionKeyHash {
+  std::size_t operator()(const ResolutionKey& key) const {
+    return std::hash<int>()(key.width) ^ (std::hash<int>()(key.height) << 1);
+  }
+};
+
+static const std::unordered_map<ResolutionKey, std::string, ResolutionKeyHash>
+    kResolutionNames = {
+        {{640, 480}, "VGA 4:3"},   {{848, 480}, "VGA 16:9"},
+        {{896, 504}, "SD 16:9"},   {{1280, 720}, "HD 16:9"},
+        {{1920, 1080}, "FHD 16:9"}, {{2560, 1440}, "2K 16:9"},
+};
+}  // namespace resolution_names
+
 static std::string get_verbose_string_of_resolution(
     const ResolutionFramerate& resolution_framerate) {
   if (resolution_framerate.width_px == 0 &&
@@ -297,24 +322,11 @@ static std::string get_verbose_string_of_resolution(
     return "AUTO";
   }
   std::stringstream ss;
-  if (resolution_framerate.width_px == 640 &&
-      resolution_framerate.height_px == 480) {
-    ss << "VGA 4:3";
-  } else if (resolution_framerate.width_px == 848 &&
-             resolution_framerate.height_px == 480) {
-    ss << "VGA 16:9";
-  } else if (resolution_framerate.width_px == 896 &&
-             resolution_framerate.height_px == 504) {
-    ss << "SD 16:9";
-  } else if (resolution_framerate.width_px == 1280 &&
-             resolution_framerate.height_px == 720) {
-    ss << "HD 16:9";
-  } else if (resolution_framerate.width_px == 1920 &&
-             resolution_framerate.height_px == 1080) {
-    ss << "FHD 16:9";
-  } else if (resolution_framerate.width_px == 2560 &&
-             resolution_framerate.height_px == 1440) {
-    ss << "2K 16:9";
+  const resolution_names::ResolutionKey key{resolution_framerate.width_px,
+                                             resolution_framerate.height_px};
+  auto it = resolution_names::kResolutionNames.find(key);
+  if (it != resolution_names::kResolutionNames.end()) {
+    ss << it->second;
   } else {
     ss << resolution_framerate.width_px << "x"
        << resolution_framerate.height_px;
@@ -343,6 +355,138 @@ struct ManufacturerForPlatform {
   std::string manufacturer_name;
   std::vector<CameraNameAndType> cameras;
 };
+
+// Platform camera choices registry - encapsulates camera availability per platform
+namespace platform_camera_choices {
+
+// Common camera sets used across multiple platforms
+inline std::vector<CameraNameAndType> get_usb_cameras() {
+  return {
+      {"INFIRAY USB", X_CAM_TYPE_USB_INFIRAY},
+      {"INFIRAY USB T2", X_CAM_TYPE_USB_INFIRAY_T2},
+      {"INFIRAY USB P2 Pro", X_CAM_TYPE_USB_INFIRAY_P2_PRO},
+      {"INFIRAY USB X2", X_CAM_TYPE_USB_INFIRAY_X2},
+      {"FLIR_VUE", X_CAM_TYPE_USB_FLIR_VUE},
+      {"FLIR_BOSON", X_CAM_TYPE_USB_FLIR_BOSON},
+      {"EXP USB GENERIC", X_CAM_TYPE_USB_GENERIC}};
+}
+
+inline ManufacturerForPlatform get_manufacturer_usb() {
+  return {"USB", get_usb_cameras()};
+}
+
+inline ManufacturerForPlatform get_manufacturer_debug() {
+  return {"DEV/DEBUG", {{"Dummy (debug)", 0},
+                        {"External (DEV)", 2},
+                        {"DEV Filecamera", 4}}};
+}
+
+inline ManufacturerForPlatform get_manufacturer_disable() {
+  return {"DISABLE", {{"DISABLE", X_CAM_TYPE_DISABLED}}};
+}
+
+// Platform-specific camera manufacturers
+inline std::vector<ManufacturerForPlatform> get_rpi_cameras() {
+  return {
+      {"ARDUCAM", {{"SKYMASTERHDR", 40}, {"SKYVISIONPRO", 41}, {"IMX477m", 42},
+                   {"IMX462", 43}, {"IMX327", 44}, {"IMX290", 45},
+                   {"IMX462_LOWLIGHT_MINI", 46}}},
+      {"VEYE", {{"2MP", 60}, {"CSIMX307", 61}, {"CSSC132", 62}, {"MVCAM", 63}}},
+      {"RPI FOUNDATION", {{"V1 OV5647", 30}, {"V2 IMX219", 31},
+                          {"V3 IMX708", 32}, {"HQ IMX477", 33}}},
+      {"HDMI TO CSI", {{"GENERIC HDMI to CSI", 20}}},
+      get_manufacturer_usb(),
+      get_manufacturer_debug()};
+}
+
+inline std::vector<ManufacturerForPlatform> get_x20_cameras() {
+  return {
+      {"HDZERO", {{"GENERIC", X_CAM_TYPE_X20_HDZERO_GENERIC}}},
+      {"RUNCAM", {{"RUNCAM V1", X_CAM_TYPE_X20_HDZERO_RUNCAM_V1},
+                  {"RUNCAM V2", X_CAM_TYPE_X20_HDZERO_RUNCAM_V2},
+                  {"RUNCAM V3", X_CAM_TYPE_X20_HDZERO_RUNCAM_V3},
+                  {"RUNCAM NANO 90", X_CAM_TYPE_X20_HDZERO_RUNCAM_NANO_90},
+                  {"OpenHD Jaguar", X_CAM_TYPE_X20_OHD_Jaguar}}}};
+}
+
+inline std::vector<ManufacturerForPlatform> get_rock3_cameras() {
+  return {
+      {"Arducam", {{"IMX462", X_CAM_TYPE_ROCK_3_IMX462},
+                   {"IMX519", X_CAM_TYPE_ROCK_3_IMX519},
+                   {"IMX708", X_CAM_TYPE_ROCK_3_IMX708},
+                   {"OpenHD Jaguar", X_CAM_TYPE_ROCK_3_OHD_Jaguar}}},
+      get_manufacturer_usb(),
+      get_manufacturer_debug()};
+}
+
+inline std::vector<ManufacturerForPlatform> get_rock5a_cameras() {
+  return {
+      {"Generic", {{"IMX415", X_CAM_TYPE_ROCK_5_IMX415},
+                   {"IMX462", X_CAM_TYPE_ROCK_5_IMX462},
+                   {"IMX477", X_CAM_TYPE_ROCK_5_IMX477},
+                   {"IMX519", X_CAM_TYPE_ROCK_5_IMX519},
+                   {"OV5647", X_CAM_TYPE_ROCK_5_OV5647},
+                   {"IMX219", X_CAM_TYPE_ROCK_5_IMX219},
+                   {"IMX708", X_CAM_TYPE_ROCK_5_IMX708},
+                   {"OpenHD Jaguar", X_CAM_TYPE_ROCK_5_OHD_Jaguar}}},
+      get_manufacturer_usb(),
+      get_manufacturer_debug()};
+}
+
+inline std::vector<ManufacturerForPlatform> get_rock5b_cameras() {
+  return {
+      {"Generic", {{"HDMI IN", X_CAM_TYPE_ROCK_5_HDMI_IN},
+                   {"IMX415", X_CAM_TYPE_ROCK_5_IMX415},
+                   {"IMX462", X_CAM_TYPE_ROCK_5_IMX462},
+                   {"IMX477", X_CAM_TYPE_ROCK_5_IMX477},
+                   {"IMX519", X_CAM_TYPE_ROCK_5_IMX519},
+                   {"OV5647", X_CAM_TYPE_ROCK_5_OV5647},
+                   {"IMX219", X_CAM_TYPE_ROCK_5_IMX219},
+                   {"IMX708", X_CAM_TYPE_ROCK_5_IMX708},
+                   {"OpenHD Jaguar", X_CAM_TYPE_ROCK_5_OHD_Jaguar}}},
+      get_manufacturer_usb(),
+      get_manufacturer_debug()};
+}
+
+inline std::vector<ManufacturerForPlatform> get_nvidia_cameras() {
+  return {
+      {"LEOPARD", {{"IMX577", X_CAM_TYPE_NVIDIA_XAVIER_IMX577}}},
+      get_manufacturer_usb(),
+      get_manufacturer_debug()};
+}
+
+inline std::vector<ManufacturerForPlatform> get_willy_cameras() {
+  return {
+      {"WILLY", {{"HORNET", X_CAM_TYPE_WILLY_HORNET},
+                 {"JAGUAR", X_CAM_TYPE_WILLY_JAGUAR},
+                 {"REKINDLE", X_CAM_TYPE_WILLY_REKINDLE}}},
+      get_manufacturer_usb(),
+      get_manufacturer_debug()};
+}
+
+inline std::vector<ManufacturerForPlatform> get_x86_cameras() {
+  return {get_manufacturer_usb(), get_manufacturer_debug()};
+}
+
+inline std::vector<ManufacturerForPlatform> get_default_cameras() {
+  return {get_manufacturer_debug()};
+}
+
+// Set of platform types that share RPI camera choices
+inline bool is_rpi_platform(int platform_type) {
+  return platform_type == X_PLATFORM_TYPE_RPI_OLD ||
+         platform_type == X_PLATFORM_TYPE_RPI_4 ||
+         platform_type == X_PLATFORM_TYPE_RPI_CM4;
+}
+
+// Set of platform types that share Rock3 camera choices
+inline bool is_rock3_platform(int platform_type) {
+  return platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
+         platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;
+}
+
+}  // namespace platform_camera_choices
+
 /**
  * Return: a list of categories for this platform.
  * Each category has a list of valid camera types (for this platform).
@@ -352,150 +496,41 @@ struct ManufacturerForPlatform {
  */
 static std::vector<ManufacturerForPlatform> get_camera_choices_for_platform(
     int platform_type, bool is_secondary) {
-  std::vector<CameraNameAndType> usb_cameras{
-      CameraNameAndType{"INFIRAY USB", X_CAM_TYPE_USB_INFIRAY},
-      CameraNameAndType{"INFIRAY USB T2", X_CAM_TYPE_USB_INFIRAY_T2},
-      CameraNameAndType{"INFIRAY USB P2 Pro", X_CAM_TYPE_USB_INFIRAY_P2_PRO},
-      CameraNameAndType{"INFIRAY USB X2", X_CAM_TYPE_USB_INFIRAY_X2},
-      CameraNameAndType{"FLIR_VUE", X_CAM_TYPE_USB_FLIR_VUE},
-      CameraNameAndType{"FLIR_BOSON", X_CAM_TYPE_USB_FLIR_BOSON},
-      CameraNameAndType{"EXP USB GENERIC", X_CAM_TYPE_USB_GENERIC}};
-  ManufacturerForPlatform MANUFACTURER_USB{"USB", usb_cameras};
-  std::vector<CameraNameAndType> debug_cameras{
-      CameraNameAndType{"Dummy (debug)", 0},
-      CameraNameAndType{"External (DEV)", 2},
-      // CameraNameAndType{"External IP (DEV)",3},
-      CameraNameAndType{"DEV Filecamera", 4},
-  };
-  ManufacturerForPlatform MANUFACTURER_DEBUG{"DEV/DEBUG", debug_cameras};
-  // Secondary can only be used with USB and / or the debug cameras. CSI is not
-  // usable for secondary.
+  using namespace platform_camera_choices;
+
+  // Secondary camera only supports USB and debug cameras
   if (is_secondary) {
-    // Not really a manufacturer, but ui looks okay with this
-    std::vector<CameraNameAndType> disable_camera{
-        CameraNameAndType{"DISABLE", X_CAM_TYPE_DISABLED},
-    };
-    ManufacturerForPlatform MANUFACTURER_DISABLE{"DISABLE", disable_camera};
-    return std::vector<ManufacturerForPlatform>{
-        MANUFACTURER_DISABLE, MANUFACTURER_USB, MANUFACTURER_DEBUG};
+    return {get_manufacturer_disable(), get_manufacturer_usb(),
+            get_manufacturer_debug()};
   }
-  if (platform_type == X_PLATFORM_TYPE_RPI_OLD ||
-      platform_type == X_PLATFORM_TYPE_RPI_4 ||
-      platform_type == X_PLATFORM_TYPE_RPI_CM4) {
-    std::vector<CameraNameAndType> arducam_cameras{
-        CameraNameAndType{"SKYMASTERHDR", 40},
-        CameraNameAndType{"SKYVISIONPRO", 41},
-        CameraNameAndType{"IMX477m", 42},
-        CameraNameAndType{"IMX462", 43},
-        CameraNameAndType{"IMX327", 44},
-        CameraNameAndType{"IMX290", 45},
-        CameraNameAndType{"IMX462_LOWLIGHT_MINI", 46}};
-    std::vector<CameraNameAndType> veye_cameras{
-        CameraNameAndType{"2MP", 60},
-        CameraNameAndType{"CSIMX307", 61},
-        CameraNameAndType{"CSSC132", 62},
-        CameraNameAndType{"MVCAM", 63},
-    };
-    std::vector<CameraNameAndType> rpif_cameras{
-        CameraNameAndType{"V1 OV5647", 30},
-        CameraNameAndType{"V2 IMX219", 31},
-        CameraNameAndType{"V3 IMX708", 32},
-        CameraNameAndType{"HQ IMX477", 33},
-    };
-    std::vector<CameraNameAndType> hdmi_to_csi_cameras{
-        CameraNameAndType{"GENERIC HDMI to CSI", 20}};
-    return std::vector<ManufacturerForPlatform>{
-        ManufacturerForPlatform{"ARDUCAM", arducam_cameras},
-        ManufacturerForPlatform{"VEYE", veye_cameras},
-        ManufacturerForPlatform{"RPI FOUNDATION", rpif_cameras},
-        ManufacturerForPlatform{"HDMI TO CSI", hdmi_to_csi_cameras},
-        MANUFACTURER_USB,
-        MANUFACTURER_DEBUG};
-  } else if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
-    std::vector<CameraNameAndType> runcam_cameras{
-        CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_X21_OHD_Jaguar},
-    };
-  } else if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
-    // On the X20, we have auto detection of the camera type,
-    // But we still populate the UI like for platforms where the user has to
-    // select the cam type.
-    std::vector<CameraNameAndType> generic_cameras{
-        CameraNameAndType{"GENERIC", X_PLATFORM_TYPE_ROCKCHIP_RV1126},
-    };
-    std::vector<CameraNameAndType> runcam_cameras{
-        CameraNameAndType{"RUNCAM V1", X_CAM_TYPE_X20_HDZERO_RUNCAM_V1},
-        CameraNameAndType{"RUNCAM V2", X_CAM_TYPE_X20_HDZERO_RUNCAM_V2},
-        CameraNameAndType{"RUNCAM V3", X_CAM_TYPE_X20_HDZERO_RUNCAM_V3},
-        CameraNameAndType{"RUNCAM NANO 90",
-                          X_CAM_TYPE_X20_HDZERO_RUNCAM_NANO_90},
-        CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_X20_OHD_Jaguar},
-    };
-    return std::vector<ManufacturerForPlatform>{
-        ManufacturerForPlatform{"HDZERO", generic_cameras},
-        ManufacturerForPlatform{"RUNCAM", runcam_cameras}};
-  } else if ((platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W) ||
-             (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3)) {
-    std::vector<CameraNameAndType> arducam_cameras{
-        CameraNameAndType{"IMX462", X_CAM_TYPE_ROCK_3_IMX462},
-        CameraNameAndType{"IMX519", X_CAM_TYPE_ROCK_3_IMX519},
-        CameraNameAndType{"IMX708", X_CAM_TYPE_ROCK_3_IMX708},
-        CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_ROCK_3_OHD_Jaguar}};
-    std::vector<CameraNameAndType> generic_cameras{
-        CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_3_HDMI_IN},
-        CameraNameAndType{"OV5647", X_CAM_TYPE_ROCK_3_OV5647},
-        CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_3_IMX219}};
-    return std::vector<ManufacturerForPlatform>{
-        ManufacturerForPlatform{"Arducam", arducam_cameras}, MANUFACTURER_USB,
-        MANUFACTURER_DEBUG};
-  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A) {
-    std::vector<CameraNameAndType> generic_cameras{
-        CameraNameAndType{"IMX415", X_CAM_TYPE_ROCK_5_IMX415},
-        CameraNameAndType{"IMX462", X_CAM_TYPE_ROCK_5_IMX462},
-        CameraNameAndType{"IMX477", X_CAM_TYPE_ROCK_5_IMX477},
-        CameraNameAndType{"IMX519", X_CAM_TYPE_ROCK_5_IMX519},
-        CameraNameAndType{"OV5647", X_CAM_TYPE_ROCK_5_OV5647},
-        CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_5_IMX219},
-        CameraNameAndType{"IMX708", X_CAM_TYPE_ROCK_5_IMX708},
-        CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_ROCK_5_OHD_Jaguar}};
-    return std::vector<ManufacturerForPlatform>{
-        ManufacturerForPlatform{"Generic", generic_cameras}, MANUFACTURER_USB,
-        MANUFACTURER_DEBUG};
-  } else if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
-    std::vector<CameraNameAndType> generic_cameras{
-        CameraNameAndType{"HDMI IN", X_CAM_TYPE_ROCK_5_HDMI_IN},
-        CameraNameAndType{"IMX415", X_CAM_TYPE_ROCK_5_IMX415},
-        CameraNameAndType{"IMX462", X_CAM_TYPE_ROCK_5_IMX462},
-        CameraNameAndType{"IMX477", X_CAM_TYPE_ROCK_5_IMX477},
-        CameraNameAndType{"IMX519", X_CAM_TYPE_ROCK_5_IMX519},
-        CameraNameAndType{"OV5647", X_CAM_TYPE_ROCK_5_OV5647},
-        CameraNameAndType{"IMX219", X_CAM_TYPE_ROCK_5_IMX219},
-        CameraNameAndType{"IMX708", X_CAM_TYPE_ROCK_5_IMX708},
-        CameraNameAndType{"OpenHD Jaguar", X_CAM_TYPE_ROCK_5_OHD_Jaguar},
-    };
-    return std::vector<ManufacturerForPlatform>{
-        ManufacturerForPlatform{"Generic", generic_cameras}, MANUFACTURER_USB,
-        MANUFACTURER_DEBUG};
-  } else if (platform_type == X_PLATFORM_TYPE_X86) {
-    return std::vector<ManufacturerForPlatform>{MANUFACTURER_USB,
-                                                MANUFACTURER_DEBUG};
-  } else if (platform_type == X_PLATFORM_TYPE_NVIDIA_XAVIER) {
-    std::vector<CameraNameAndType> nvidia_leopard_csi_cameras{
-        CameraNameAndType{"IMX577", X_CAM_TYPE_NVIDIA_XAVIER_IMX577},
-    };
-    return std::vector<ManufacturerForPlatform>{
-        ManufacturerForPlatform{"LEOPARD", nvidia_leopard_csi_cameras},
-        MANUFACTURER_USB, MANUFACTURER_DEBUG};
-  } else if (platform_type == X_PLATFORM_TYPE_WILLY) {
-    std::vector<CameraNameAndType> willy_cameras{
-        CameraNameAndType{"HORNET", X_CAM_TYPE_WILLY_HORNET},
-        CameraNameAndType{"JAGUAR", X_CAM_TYPE_WILLY_JAGUAR},
-        CameraNameAndType{"REKINDLE", X_CAM_TYPE_WILLY_REKINDLE},
-    };
-    return std::vector<ManufacturerForPlatform>{
-        ManufacturerForPlatform{"WILLY", willy_cameras}, MANUFACTURER_USB,
-        MANUFACTURER_DEBUG};
+
+  // Platform-specific camera choices
+  if (is_rpi_platform(platform_type)) {
+    return get_rpi_cameras();
   }
-  return std::vector<ManufacturerForPlatform>{MANUFACTURER_DEBUG};
+  if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
+    return get_x20_cameras();
+  }
+  if (is_rock3_platform(platform_type)) {
+    return get_rock3_cameras();
+  }
+  if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A) {
+    return get_rock5a_cameras();
+  }
+  if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
+    return get_rock5b_cameras();
+  }
+  if (platform_type == X_PLATFORM_TYPE_X86) {
+    return get_x86_cameras();
+  }
+  if (platform_type == X_PLATFORM_TYPE_NVIDIA_XAVIER) {
+    return get_nvidia_cameras();
+  }
+  if (platform_type == X_PLATFORM_TYPE_WILLY) {
+    return get_willy_cameras();
+  }
+
+  return get_default_cameras();
 }
 
 #endif  // OPENHD_CAMERA_HPP
