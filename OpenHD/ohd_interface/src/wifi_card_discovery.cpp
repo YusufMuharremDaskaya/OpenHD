@@ -27,6 +27,8 @@
 #include <list>
 #include <regex>
 #include <thread>
+#include <unordered_map>
+#include <vector>
 
 #include "config_paths.h"
 #include "openhd_spdlog.h"
@@ -35,60 +37,46 @@
 #include "wifi_card.h"
 #include "wifi_command_helper.h"
 
+// Lookup table for exact driver name matches (case-insensitive)
+static const std::unordered_map<std::string, WiFiCardType> kExactDriverMatches = {
+    {"RTL88XXAU_OHD", WiFiCardType::OPENHD_RTL_88X2AU},
+    {"RTL88X2BU_OHD", WiFiCardType::OPENHD_RTL_88X2BU},
+    {"RTL88X2EU_OHD", WiFiCardType::OPENHD_RTL_88X2EU},
+    {"CNSS_PCI", WiFiCardType::QUALCOMM},
+    {"RTL8852BU_OHD", WiFiCardType::OPENHD_RTL_8852BU},
+    {"RTL88X2CU_OHD", WiFiCardType::OPENHD_RTL_88X2CU},
+};
+
+// Substring patterns to match (case-insensitive) and their corresponding card types
+// Note: Order matters for priority - first match wins
+static const std::vector<std::pair<std::string, WiFiCardType>> kSubstringDriverMatches = {
+    {"ATH9K", WiFiCardType::ATHEROS},
+    {"RT2800USB", WiFiCardType::RALINK},
+    {"IWLWIFI", WiFiCardType::INTEL},
+    {"BRCMFMAC", WiFiCardType::BROADCOM},
+    {"BCMSDH_SDMMC", WiFiCardType::BROADCOM},
+    {"AICWF_SDIO", WiFiCardType::AIC},
+    {"88XXAU", WiFiCardType::RTL_88X2AU},
+    {"RTW_8822BU", WiFiCardType::RTL_88X2BU},
+    {"MT7921U", WiFiCardType::MT_7921u},
+};
+
 static WiFiCardType driver_to_wifi_card_type(const std::string& driver_name) {
-  // The fully supported card(s)
-  if (OHDUtil::equal_after_uppercase(driver_name, "rtl88xxau_ohd")) {
-    return WiFiCardType::OPENHD_RTL_88X2AU;
+  const std::string driver_upper = OHDUtil::to_uppercase(driver_name);
+
+  // Check exact matches first
+  const auto exact_it = kExactDriverMatches.find(driver_upper);
+  if (exact_it != kExactDriverMatches.end()) {
+    return exact_it->second;
   }
-  if (OHDUtil::equal_after_uppercase(driver_name, "rtl88x2bu_ohd")) {
-    // NOTE: "rtw_8822bu" is the bad kernel driver which is fucking horrible.
-    return WiFiCardType::OPENHD_RTL_88X2BU;
+
+  // Check substring matches
+  for (const auto& [pattern, card_type] : kSubstringDriverMatches) {
+    if (driver_upper.find(pattern) != std::string::npos) {
+      return card_type;
+    }
   }
-  // Experimental, not fully working card(s)
-  if (OHDUtil::equal_after_uppercase(driver_name, "rtl88x2eu_ohd")) {
-    return WiFiCardType::OPENHD_RTL_88X2EU;
-  }
-  if (OHDUtil::equal_after_uppercase(driver_name, "cnss_pci")) {
-    return WiFiCardType::QUALCOMM;
-  }
-  // The not supported, but maybe sometime in the future working card(s)
-  if (OHDUtil::equal_after_uppercase(driver_name, "rtl8852bu_ohd")) {
-    // NOTE: "rtw_8822bu" is the bad kernel driver which is fucking horrible.
-    return WiFiCardType::OPENHD_RTL_8852BU;
-  }
-  if (OHDUtil::equal_after_uppercase(driver_name, "rtl88x2cu_ohd")) {
-    // NOTE: "rtw_8822cu" is the bad kernel driver which is fucking horrible.
-    return WiFiCardType::OPENHD_RTL_88X2CU;
-  }
-  if (OHDUtil::contains_after_uppercase(driver_name, "ath9k")) {
-    return WiFiCardType::ATHEROS;
-  }
-  if (OHDUtil::contains_after_uppercase(driver_name, "rt2800usb")) {
-    WiFiCardType::RALINK;
-  }
-  if (OHDUtil::contains_after_uppercase(driver_name, "iwlwifi")) {
-    return WiFiCardType::INTEL;
-  }
-  if (OHDUtil::contains_after_uppercase(driver_name, "brcmfmac")) {
-    return WiFiCardType::BROADCOM;
-  }
-  if (OHDUtil::contains_after_uppercase(driver_name, "bcmsdh_sdmmc")) {
-    return WiFiCardType::BROADCOM;
-  }
-  if (OHDUtil::contains_after_uppercase(driver_name, "aicwf_sdio")) {
-    return WiFiCardType::AIC;
-  }
-  if (OHDUtil::contains_after_uppercase(driver_name, "88xxau")) {
-    return WiFiCardType::RTL_88X2AU;
-  }
-  if (OHDUtil::contains_after_uppercase(driver_name, "rtw_8822bu")) {
-    // NOTE: "rtw_8822bu" is the bad kernel driver which doesn't support monitor
-    // mode
-    return WiFiCardType::RTL_88X2BU;
-  }
-  if (OHDUtil::contains_after_uppercase(driver_name, "mt7921u")) {
-    return WiFiCardType::MT_7921u;
-  }
+
   return WiFiCardType::UNKNOWN;
 }
 

@@ -27,6 +27,7 @@
 #include <iostream>
 #include <regex>
 #include <set>
+#include <unordered_map>
 
 #include "openhd_spdlog.h"
 #include "openhd_util.h"
@@ -96,49 +97,51 @@ static int internal_discover_platform() {
     std::regex r("rockchip,(r[kv][0-9]+)");
     std::smatch sm;
 
+    // Simple chip to platform type mapping
+    static const std::unordered_map<std::string, int> kSimpleChipMapping = {
+        {"rv1126", X_PLATFORM_TYPE_ROCKCHIP_RV1126},
+        {"rv1103", X_PLATFORM_TYPE_ROCKCHIP_RV1103},
+        {"rv1106", X_PLATFORM_TYPE_ROCKCHIP_RV1106},
+        {"rk3506", X_PLATFORM_TYPE_LUCKFOX_LYRA},
+    };
+
     if (regex_search(compatible_content, sm, r)) {
       const std::string chip = sm[1];
       openhd::log::get_default()->warn("Rockchip chip identified: {}", chip);
 
+      // Check simple mappings first
+      auto simple_it = kSimpleChipMapping.find(chip);
+      if (simple_it != kSimpleChipMapping.end()) {
+        openhd::log::get_default()->warn("Detected Rockchip {}.",
+                                         x_platform_type_to_string(simple_it->second));
+        return simple_it->second;
+      }
+
+      // Handle RK3588 variants
       if (chip == "rk3588") {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa ROCK 5A")) {
           openhd::log::get_default()->warn(
               "Detected Rockchip RK3588 (Radxa ROCK 5A).");
           return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A;
-        } else {
-          openhd::log::get_default()->warn(
-              "Detected Rockchip RK3588 (Radxa ROCK 5B).");
-          return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B;
         }
-      } else if (chip == "rk3566") {
+        openhd::log::get_default()->warn(
+            "Detected Rockchip RK3588 (Radxa ROCK 5B).");
+        return X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B;
+      }
+
+      // Handle RK3566 variants
+      if (chip == "rk3566") {
         if (OHDUtil::contains_after_uppercase(device_tree_model,
                                               "Radxa CM3 RPI CM4 IO")) {
           openhd::log::get_default()->warn(
               "Detected Rockchip RK3566 (Radxa CM3).");
           return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3;
-        } else if (OHDUtil::contains_after_uppercase(device_tree_model,
-                                                     "Radxa ROCK3 Model A")) {
-          openhd::log::get_default()->warn(
-              "Detected Rockchip RK3566 (Radxa ROCK3 Model A).");
-          return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
-        } else {
-          openhd::log::get_default()->warn(
-              "Detected Rockchip RK3566 (default Radxa ZERO3W).");
-          return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
         }
-      } else if (chip == "rv1126") {
-        openhd::log::get_default()->warn("Detected Rockchip RV1126.");
-        return X_PLATFORM_TYPE_ROCKCHIP_RV1126;
-      } else if (chip == "rv1103") {
-        openhd::log::get_default()->warn("Detected Rockchip RV1103.");
-        return X_PLATFORM_TYPE_ROCKCHIP_RV1103;
-      } else if (chip == "rv1106") {
-        openhd::log::get_default()->warn("Detected Rockchip RV1106");
-        return X_PLATFORM_TYPE_ROCKCHIP_RV1106;
-      } else if (chip == "rk3506") {
-        openhd::log::get_default()->warn("Detected Luckfox Lyra");
-        return X_PLATFORM_TYPE_LUCKFOX_LYRA;
+        // Default to ZERO3W for other RK3566 boards
+        openhd::log::get_default()->warn(
+            "Detected Rockchip RK3566 (default Radxa ZERO3W).");
+        return X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W;
       }
     }
 
@@ -156,16 +159,21 @@ static int internal_discover_platform() {
     const std::string qualcomm_board_id_content =
         OHDFilesystemUtil::read_file(QUALCOMM_BOARDID_PATH);
 
+    // Qualcomm chip to platform type mapping
+    static const std::unordered_map<std::string, int> kQualcommChipMapping = {
+        {"qcs405", X_PLATFORM_TYPE_QUALCOMM_QCS405},
+        {"qrb5165", X_PLATFORM_TYPE_QUALCOMM_QRB5165},
+    };
+
     std::regex qualcomm_regex("(qcs405|qrb5165)");
     std::smatch match;
 
     if (std::regex_search(qualcomm_board_id_content, match, qualcomm_regex)) {
-      if (match[1] == "qcs405") {
-        openhd::log::get_default()->warn("Detected Qualcomm QCS405.");
-        return X_PLATFORM_TYPE_QUALCOMM_QCS405;
-      } else if (match[1] == "qrb5165") {
-        openhd::log::get_default()->warn("Detected Qualcomm QRB5165.");
-        return X_PLATFORM_TYPE_QUALCOMM_QRB5165;
+      const std::string chip = match[1];
+      auto it = kQualcommChipMapping.find(chip);
+      if (it != kQualcommChipMapping.end()) {
+        openhd::log::get_default()->warn("Detected Qualcomm {}.", chip);
+        return it->second;
       }
     }
 
@@ -206,87 +214,68 @@ static OHDPlatform discover_and_write_manifest() {
   return platform;
 }
 
+// Lookup table for platform type names
+static const std::unordered_map<int, std::string> kPlatformTypeNames = {
+    {X_PLATFORM_TYPE_UNKNOWN, "UNKNOWN"},
+    {X_PLATFORM_TYPE_X86, "X86"},
+    {X_PLATFORM_TYPE_RPI_OLD, "RPI<=3"},
+    {X_PLATFORM_TYPE_RPI_4, "RPI 4"},
+    {X_PLATFORM_TYPE_RPI_5, "RPI 5"},
+    {X_PLATFORM_TYPE_RPI_CM4, "RPI CM4"},
+    {X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W, "RADXA ZERO3W"},
+    {X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3, "RADXA CM3"},
+    {X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A, "RADXA RK3588S"},
+    {X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B, "RADXA RK3588"},
+    {X_PLATFORM_TYPE_ROCKCHIP_RV1126, "RV1126"},
+    {X_PLATFORM_TYPE_ROCKCHIP_RV1103, "RV1103"},
+    {X_PLATFORM_TYPE_ROCKCHIP_RV1106, "RV1106"},
+    {X_PLATFORM_TYPE_LUCKFOX_LYRA, "LUCKFOX LYRA"},
+    {X_PLATFORM_TYPE_WILLY, "Willy"},
+    {X_PLATFORM_TYPE_ALWINNER_X20, "X20"},
+    {X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED, "OPENIPC SIGMASTAR"},
+    {X_PLATFORM_TYPE_NVIDIA_XAVIER, "NVIDIA_XAVIER"},
+    {X_PLATFORM_TYPE_QUALCOMM_QCS405, "QUALCOMM_QCS405"},
+    {X_PLATFORM_TYPE_QUALCOMM_QRB5165, "QUALCOMM_QRB5165"},
+};
+
 std::string x_platform_type_to_string(int platform_type) {
-  switch (platform_type) {
-    case X_PLATFORM_TYPE_UNKNOWN:
-      return "UNKNOWN";
-    case X_PLATFORM_TYPE_X86:
-      return "X86";
-    case X_PLATFORM_TYPE_RPI_OLD:
-      return "RPI<=3";
-    case X_PLATFORM_TYPE_RPI_4:
-      return "RPI 4";
-    case X_PLATFORM_TYPE_RPI_5:
-      return "RPI 5";
-    case X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W:
-      return "RADXA ZERO3W";
-    case X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3:
-      return "RADXA CM3";
-    case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A:
-      return "RADXA RK3588S";
-    case X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B:
-      return "RADXA RK3588";
-    case X_PLATFORM_TYPE_ROCKCHIP_RV1126:
-      return "RV1126";
-    case X_PLATFORM_TYPE_ROCKCHIP_RV1103:
-      return "RV1103";
-    case X_PLATFORM_TYPE_ROCKCHIP_RV1106:
-      return "RV1106";
-    case X_PLATFORM_TYPE_WILLY:
-      return "Willy";
-    case X_PLATFORM_TYPE_ALWINNER_X20:
-      return "X20";
-    case X_PLATFORM_TYPE_OPENIPC_SIGMASTAR_UNDEFINED:
-      return "OPENIPC SIGMASTAR";
-    case X_PLATFORM_TYPE_NVIDIA_XAVIER:
-      return "NVIDIA_XAVIER";
-    case X_PLATFORM_TYPE_QUALCOMM_QCS405:
-      return "QUALCOMM_QCS405";
-    case X_PLATFORM_TYPE_QUALCOMM_QRB5165:
-      return "QUALCOMM_QRB5165";
-    default:
-      std::stringstream ss;
-      ss << "ERR-UNDEFINED{" << platform_type << "}";
-      return ss.str();
+  auto it = kPlatformTypeNames.find(platform_type);
+  if (it != kPlatformTypeNames.end()) {
+    return it->second;
   }
+  std::stringstream ss;
+  ss << "ERR-UNDEFINED{" << platform_type << "}";
+  return ss.str();
 }
 
+// Lookup table for FEC max block size per platform type
+static const std::unordered_map<int, int> kFecMaxBlockSizeByPlatform = {
+    {X_PLATFORM_TYPE_RPI_4, 50},
+    {X_PLATFORM_TYPE_RPI_CM4, 50},
+    {X_PLATFORM_TYPE_RPI_OLD, 30},
+    {X_PLATFORM_TYPE_X86, 80},
+    {X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W, 20},
+    {X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3, 20},
+    {X_PLATFORM_TYPE_ROCKCHIP_RV1103, 20},
+    {X_PLATFORM_TYPE_ROCKCHIP_RV1106, 20},
+    {X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A, 20},
+    {X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B, 20},
+    {X_PLATFORM_TYPE_ALWINNER_X20, 20},
+    {X_PLATFORM_TYPE_NVIDIA_XAVIER, 50},
+    {X_PLATFORM_TYPE_WILLY, 50},
+    {X_PLATFORM_TYPE_QUALCOMM_QRB5165, 50},
+    {X_PLATFORM_TYPE_QUALCOMM_QCS405, 50},
+};
+
+static constexpr int kDefaultFecMaxBlockSize = 20;
+
 int get_fec_max_block_size_for_platform() {
-  auto platform_type = OHDPlatform::instance().platform_type;
-
-  if (platform_type == X_PLATFORM_TYPE_RPI_4 ||
-      platform_type == X_PLATFORM_TYPE_RPI_CM4) {
-    return 50;
+  const auto platform_type = OHDPlatform::instance().platform_type;
+  const auto it = kFecMaxBlockSizeByPlatform.find(platform_type);
+  if (it != kFecMaxBlockSizeByPlatform.end()) {
+    return it->second;
   }
-  if (platform_type == X_PLATFORM_TYPE_RPI_OLD) {
-    return 30;
-  }
-  if (platform_type == X_PLATFORM_TYPE_X86) {
-    return 80;
-  }
-  if (platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W ||
-      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3 ||
-      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1103 ||
-      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RV1106 ||
-      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A ||
-      platform_type == X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B) {
-    return 20;
-  }
-  if (platform_type == X_PLATFORM_TYPE_ALWINNER_X20) {
-    return 20;
-  }
-  if (platform_type == X_PLATFORM_TYPE_NVIDIA_XAVIER) {
-    return 50;
-  }
-  if (platform_type == X_PLATFORM_TYPE_WILLY) {
-    return 50;
-  }
-  if (platform_type == X_PLATFORM_TYPE_QUALCOMM_QRB5165 ||
-      platform_type == X_PLATFORM_TYPE_QUALCOMM_QCS405) {
-    return 50;
-  }
-
-  return 20;
+  return kDefaultFecMaxBlockSize;
 }
 
 // OHDPlatform methods
@@ -301,12 +290,33 @@ std::string OHDPlatform::to_string() const {
   return ss.str();
 }
 
+// Platform type sets for clearer categorization (replacing magic number ranges)
+namespace platform_categories {
+static const std::set<int> kRpiPlatforms = {
+    X_PLATFORM_TYPE_RPI_OLD,
+    X_PLATFORM_TYPE_RPI_4,
+    X_PLATFORM_TYPE_RPI_CM4,
+    X_PLATFORM_TYPE_RPI_5,
+};
+
+static const std::set<int> kRockchipPlatforms = {
+    X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_ZERO3W,
+    X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_A,
+    X_PLATFORM_TYPE_ROCKCHIP_RK3588_RADXA_ROCK5_B,
+    X_PLATFORM_TYPE_ROCKCHIP_RV1126,
+    X_PLATFORM_TYPE_ROCKCHIP_RK3566_RADXA_CM3,
+    X_PLATFORM_TYPE_ROCKCHIP_RV1106,
+    X_PLATFORM_TYPE_ROCKCHIP_RV1103,
+    X_PLATFORM_TYPE_LUCKFOX_LYRA,
+};
+}  // namespace platform_categories
+
 bool OHDPlatform::is_rpi() const {
-  return platform_type >= 10 && platform_type < 20;
+  return platform_categories::kRpiPlatforms.count(platform_type) > 0;
 }
 
 bool OHDPlatform::is_rock() const {
-  return platform_type >= 20 && platform_type < 30;
+  return platform_categories::kRockchipPlatforms.count(platform_type) > 0;
 }
 
 bool OHDPlatform::is_rpi_or_x86() const {
