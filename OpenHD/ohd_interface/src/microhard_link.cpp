@@ -181,7 +181,7 @@ void communicate_with_device(const std::string& ip,
     std::this_thread::sleep_for(
         std::chrono::seconds(1));  // Wait for a second to process username
 
-    openhd::log::get_default()->debug("Sending password: {}", password);
+    openhd::log::get_default()->debug("Sending password");
     stream << password << std::flush;
     std::this_thread::sleep_for(
         std::chrono::seconds(3));  // Wait for a second to process password
@@ -242,7 +242,7 @@ void communicate_with_device_slow(const std::string& ip,
     stream << username << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    openhd::log::get_default()->debug("Sending password: {}", password);
+    openhd::log::get_default()->debug("Sending password");
     stream << password << std::flush;
     std::this_thread::sleep_for(std::chrono::seconds(3));
 

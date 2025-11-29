@@ -79,7 +79,7 @@ void validate_provided_ids(const std::vector<Setting>& settings);
 
 static bool validate_yes_or_no(int value) { return value == 0 || value == 1; }
 
-// Helper for creating read-only params- they can be usefully for debugging
+// Helper for creating read-only params- they can be useful for debugging
 Setting create_read_only_int(const std::string& id, int value);
 
 // Creates a read - only parameter - we repurpose the mavlink param set for

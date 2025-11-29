@@ -472,16 +472,16 @@ void GStreamerStream::stream_once() {
   // Check if we were able to successfully start the pipeline. If - for example
   // - the camera doesn't exist or the resolution set is not supported by the
   // camera, we won't get further than this.
-  bool succesfully_streaming = false;
+  bool successfully_streaming = false;
   m_console->debug(openhd::gst_element_get_current_state_as_string(
-      m_gst_pipeline, &succesfully_streaming));
+      m_gst_pipeline, &successfully_streaming));
   /*if(m_camera_holder->get_camera().rpi_csi_mmal_is_csi_to_hdmi ||
   m_camera_holder->get_camera().type==CameraType::ALLWINNER_CSI){
     m_console->debug("Not checking gst state after calling play (bugged)");
-    succesfully_streaming= true;
+    successfully_streaming= true;
   }*/
-  succesfully_streaming = true;
-  if (!succesfully_streaming) {
+  successfully_streaming = true;
+  if (!successfully_streaming) {
     m_console->warn("Cannot start streaming. Valid resolution ?",
                     m_camera_holder->get_camera().index);
     stop();

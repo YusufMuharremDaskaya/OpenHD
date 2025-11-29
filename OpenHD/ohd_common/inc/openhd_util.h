@@ -86,7 +86,7 @@ std::string create_command_with_args(const std::string& command,
  * Blocks until the command has been executed, and returns its result.
  * @param command the command to run
  * @param args the args for the command to run
- * @param print_debug print the command executed, this can be usefully for
+ * @param print_debug print the command executed, this can be useful for
  * debugging -to replicate, just copy the command from the log message
  * @return the command result
  */

@@ -198,12 +198,12 @@ void GroundTelemetry::send_messages_air_unit(
 
 void GroundTelemetry::loop_infinite(bool& terminate,
                                     const bool enableExtendedLogging) {
-  const auto log_intervall = std::chrono::seconds(5);
-  const auto loop_intervall = std::chrono::milliseconds(100);
+  const auto log_interval = std::chrono::seconds(5);
+  const auto loop_interval = std::chrono::milliseconds(100);
   auto last_log = std::chrono::steady_clock::now();
   while (!terminate) {
     const auto loopBegin = std::chrono::steady_clock::now();
-    if (std::chrono::steady_clock::now() - last_log >= log_intervall) {
+    if (std::chrono::steady_clock::now() - last_log >= log_interval) {
       last_log = std::chrono::steady_clock::now();
       // m_console->debug("GroundTelemetry::loopInfinite()");
       //  for debugging, check if any of the endpoints is not alive
@@ -234,7 +234,7 @@ void GroundTelemetry::loop_infinite(bool& terminate,
       }
     }
     const auto loopDelta = std::chrono::steady_clock::now() - loopBegin;
-    if (loopDelta > loop_intervall) {
+    if (loopDelta > loop_interval) {
       // We can't keep up with the wanted loop interval
       // We can't keep up with the wanted loop interval
       m_console->debug(
@@ -242,9 +242,9 @@ void GroundTelemetry::loop_infinite(bool& terminate,
           "interval. Took {}",
           openhd::util::time_readable(loopDelta));
     } else {
-      const auto sleepTime = loop_intervall - loopDelta;
+      const auto sleepTime = loop_interval - loopDelta;
       // send out in X second intervals
-      std::this_thread::sleep_for(loop_intervall);
+      std::this_thread::sleep_for(loop_interval);
     }
   }
 }

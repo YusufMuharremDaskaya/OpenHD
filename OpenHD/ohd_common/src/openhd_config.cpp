@@ -106,7 +106,8 @@ static openhd::Config load_or_default() {
                 << std::endl;
       ret.MICROHARD_PASSWORD =
           r.Get<std::string>("microhard", "MICROHARD_PASSWORD", "qwertz1");
-      std::cout << "DEBUG: MICROHARD_PASSWORD: " << ret.MICROHARD_PASSWORD
+      std::cout << "DEBUG: MICROHARD_PASSWORD: "
+                << OHDUtil::password_as_hidden_str(ret.MICROHARD_PASSWORD)
                 << std::endl;
       ret.MICROHARD_IP_AIR =
           r.Get<std::string>("microhard", "MICROHARD_IP_AIR", "");

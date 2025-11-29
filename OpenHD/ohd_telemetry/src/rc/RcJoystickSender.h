@@ -37,7 +37,7 @@
 // not for now)
 class RcJoystickSender {
  public:
-  // This callback is called in regular intervalls with valid rc channel data as
+  // This callback is called in regular intervals with valid rc channel data as
   // long as there is a joystick connected & well. If there is something wrong
   // with the joystick / no joystick connected this cb is not called (such that
   // FC can do failsafe)

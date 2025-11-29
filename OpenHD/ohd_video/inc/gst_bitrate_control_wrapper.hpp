@@ -21,8 +21,8 @@
  * © OpenHD, All Rights Reserved.
  ******************************************************************************/
 
-#ifndef OPENHD_OPENHD_OHD_VIDEO_INC_GST_BITRATE_CONTROLL_WRAPPER_H_
-#define OPENHD_OPENHD_OHD_VIDEO_INC_GST_BITRATE_CONTROLL_WRAPPER_H_
+#ifndef OPENHD_OPENHD_OHD_VIDEO_INC_GST_BITRATE_CONTROL_WRAPPER_H_
+#define OPENHD_OPENHD_OHD_VIDEO_INC_GST_BITRATE_CONTROL_WRAPPER_H_
 
 #include <gst/gst.h>
 
@@ -129,4 +129,4 @@ static std::chrono::nanoseconds calculate_delta(uint64_t dts) {
       std::chrono::steady_clock::now().time_since_epoch().count() - dts);
 }
 
-#endif  // OPENHD_OPENHD_OHD_VIDEO_INC_GST_BITRATE_CONTROLL_WRAPPER_H_
+#endif  // OPENHD_OPENHD_OHD_VIDEO_INC_GST_BITRATE_CONTROL_WRAPPER_H_

@@ -46,7 +46,7 @@ AirTelemetry::AirTelemetry() : MavlinkSystem(OHD_SYS_ID_AIR) {
         std::make_unique<openhd::telemetry::rpi::GPIOControl>();
   }
   // NOTE: We don't call set ready yet, since we have to wait until other
-  // modules have provided all their paramters.
+  // modules have provided all their parameters.
   m_generic_mavlink_param_provider->add_params(get_all_settings());
   m_components.push_back(m_generic_mavlink_param_provider);
   m_tcp_server = std::make_unique<TCPEndpoint>(
@@ -129,12 +129,12 @@ void AirTelemetry::on_messages_ground_unit(
 
 void AirTelemetry::loop_infinite(bool& terminate,
                                  const bool enableExtendedLogging) {
-  const auto log_intervall = std::chrono::seconds(5);
-  const auto loop_intervall = std::chrono::milliseconds(100);
+  const auto log_interval = std::chrono::seconds(5);
+  const auto loop_interval = std::chrono::milliseconds(100);
   auto last_log = std::chrono::steady_clock::now();
   while (!terminate) {
     const auto loopBegin = std::chrono::steady_clock::now();
-    if (std::chrono::steady_clock::now() - last_log >= log_intervall) {
+    if (std::chrono::steady_clock::now() - last_log >= log_interval) {
       // State debug logging
       last_log = std::chrono::steady_clock::now();
       // m_console->debug("AirTelemetry::loopInfinite()");
@@ -154,16 +154,16 @@ void AirTelemetry::loop_infinite(bool& terminate,
       }
     }
     const auto loopDelta = std::chrono::steady_clock::now() - loopBegin;
-    if (loopDelta > loop_intervall) {
+    if (loopDelta > loop_interval) {
       // We can't keep up with the wanted loop interval
       m_console->debug(
           "Warning AirTelemetry cannot keep up with the wanted loop interval. "
           "Took {}",
           openhd::util::time_readable(loopDelta));
     } else {
-      const auto sleepTime = loop_intervall - loopDelta;
+      const auto sleepTime = loop_interval - loopDelta;
       // send out in X second intervals
-      std::this_thread::sleep_for(loop_intervall);
+      std::this_thread::sleep_for(loop_interval);
     }
   }
 }
