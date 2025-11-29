@@ -31,6 +31,7 @@
 #include <string>
 #include <vector>
 
+#include "camera_info.hpp"
 #include "openhd_platform.h"
 
 /**
@@ -149,138 +150,18 @@ static constexpr int X_CAM_TYPE_WILLY_REKINDLE = 124;
 static constexpr int X_CAM_TYPE_DISABLED = 255;  // Max for uint8_t
 
 static std::string x_cam_type_to_string(int camera_type) {
-  switch (camera_type) {
-    case X_CAM_TYPE_DUMMY_SW:
-      return "DUMMY";
-    case X_CAM_TYPE_EXTERNAL:
-      return "EXTERNAL";
-    case X_CAM_TYPE_EXTERNAL_IP:
-      return "EXTERNAL_IP";
-    case X_CAM_TYPE_DEVELOPMENT_FILESRC:
-      return "DEV_FILESRC";
-    case X_CAM_TYPE_USB_GENERIC:
-      return "USB";
-    case X_CAM_TYPE_USB_INFIRAY:
-      return "INFIRAY";
-    case X_CAM_TYPE_USB_INFIRAY_T2:
-      return "INFIRAY_T2";
-    case X_CAM_TYPE_USB_INFIRAY_P2_PRO:
-      return "INFIRAY_P2_PRO";
-    case X_CAM_TYPE_USB_INFIRAY_X2:
-      return "INFIRAY_X2";
-    case X_CAM_TYPE_USB_FLIR_VUE:
-      return "FLIR VUE";
-    case X_CAM_TYPE_USB_FLIR_BOSON:
-      return "FLIR BOSON";
-    // All the rpi stuff begin
-    case X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI:
-      return "MMAL_HDMI";
-    case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V1_OV5647:
-      return "RPIF_V1_OV5647";
-    case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V2_IMX219:
-      return "RPIF_V2_IMX219";
-    case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708:
-      return "RPIF_V3_IMX708";
-    case X_CAM_TYPE_RPI_LIBCAMERA_RPIF_HQ_IMX477:
-      return "RPIF_HQ_IMX477";
-    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYMASTERHDR_IMX708:
-      return "ARDUCAM_SKYMASTERHDR";
-    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO_IMX519:
-      return "ARDUCAM_SKYVISIONPRO";
-    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX477M:
-      return "ARDUCAM_IMX477M";
-    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462:
-      return "ARDUCAM_IMX462";
-    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX327:
-      return "ARDUCAM_IMX327";
-    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX290:
-      return "ARDUCAM_IMX290";
-    case X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI:
-      return "ARDUCAM_IMX462_LOWLIGHT_MINI";
-    case X_CAM_TYPE_RPI_V4L2_VEYE_2MP:
-      return "VEYE_2MP";
-    case X_CAM_TYPE_RPI_V4L2_VEYE_CSIMX307:
-      return "VEYE_IMX307";
-    case X_CAM_TYPE_RPI_V4L2_VEYE_CSSC132:
-      return "VEYE_CSSC132";
-    case X_CAM_TYPE_RPI_V4L2_VEYE_MVCAM:
-      return "VEYE_MVCAM";
-    // All the x20 begin
-    case X_CAM_TYPE_X20_HDZERO_GENERIC:
-      return "X20_HDZERO_GENERIC";
-    case X_CAM_TYPE_X20_HDZERO_RUNCAM_V1:
-      return "X20_HDZERO_RUNCAM_V1";
-    case X_CAM_TYPE_X20_HDZERO_RUNCAM_V2:
-      return "X20_HDZERO_RUNCAM_V2";
-    case X_CAM_TYPE_X20_HDZERO_RUNCAM_V3:
-      return "X20_HDZERO_RUNCAM_V3";
-    case X_CAM_TYPE_X20_HDZERO_RUNCAM_NANO_90:
-      return "X20_HDZERO_RUNCAM_NANO";
-    case X_CAM_TYPE_X20_OHD_Jaguar:
-      return "X20_OHD_Jaguar";
-    case X_CAM_TYPE_X21_OHD_Jaguar:
-      return "X21_OHD_Jaguar";
-    // All the rock begin
-    case X_CAM_TYPE_ROCK_5_HDMI_IN:
-      return "ROCK_5_HDMI_IN";
-    case X_CAM_TYPE_ROCK_5_OV5647:
-      return "ROCK_5_OV5647";
-    case X_CAM_TYPE_ROCK_5_IMX219:
-      return "ROCK_5_IMX219";
-    case X_CAM_TYPE_ROCK_5_IMX708:
-      return "ROCK_5_IMX708";
-    case X_CAM_TYPE_ROCK_5_IMX462:
-      return "ROCK_5_IMX462";
-    case X_CAM_TYPE_ROCK_5_IMX415:
-      return "ROCK_5_IMX415";
-    case X_CAM_TYPE_ROCK_5_IMX477:
-      return "ROCK_5_IMX415";
-    case X_CAM_TYPE_ROCK_5_IMX519:
-      return "ROCK_5_IMX415";
-    case X_CAM_TYPE_ROCK_5_OHD_Jaguar:
-      return "ROCK_5_OHD_Jaguar";
-    case X_CAM_TYPE_ROCK_3_HDMI_IN:
-      return "ROCK_3_HDMI_IN";
-    case X_CAM_TYPE_ROCK_3_OV5647:
-      return "ROCK_3_OV5647";
-    case X_CAM_TYPE_ROCK_3_IMX219:
-      return "ROCK_3_IMX219";
-    case X_CAM_TYPE_ROCK_3_IMX708:
-      return "ROCK_3_IMX708";
-    case X_CAM_TYPE_ROCK_3_IMX462:
-      return "ROCK_3_IMX462";
-    case X_CAM_TYPE_ROCK_3_IMX519:
-      return "ROCK_3_IMX519";
-    case X_CAM_TYPE_ROCK_3_OHD_Jaguar:
-      return "ROCK_3_OHD_Jaguar";
-    case X_CAM_TYPE_DISABLED:
-      return "DISABLED";
-    case X_CAM_TYPE_OPENIPC_GENERIC:
-      return "OPENIPC_X";
-    case X_CAM_TYPE_NVIDIA_XAVIER_IMX577:
-      return "XAVIER_IMX577";
-    case X_CAM_TYPE_QC_IMX577:
-      return "CORETRONIC IMX577";
-    case X_CAM_TYPE_QC_OV9282:
-      return "CORETRONIC OV9282";
-    default:
-      break;
+  // Use CameraRegistry for lookup - encapsulates camera name information
+  const auto& registry = CameraRegistry::instance();
+  const auto* info = registry.get_camera_info(camera_type);
+  if (info) {
+    return info->get_name();
   }
   std::stringstream ss;
   ss << "UNKNOWN (" << camera_type << ")";
   return ss.str();
 };
 
-struct ResolutionFramerate {
-  int width_px;
-  int height_px;
-  int fps;
-  std::string as_string() const {
-    std::stringstream ss;
-    ss << width_px << "x" << height_px << "@" << fps;
-    return ss.str();
-  }
-};
+// ResolutionFramerate is now defined in camera_info.hpp
 
 struct XCamera {
   int camera_type = X_CAM_TYPE_DUMMY_SW;
@@ -290,30 +171,39 @@ struct XCamera {
   // For CSI camera(s) we in general 'know' from platform and cam type how to
   // tell the pipeline which cam/source to use.
   int usb_v4l2_device_number;
+
+  // Pipeline type checks - use CameraRegistry for encapsulated lookup
   bool requires_rpi_mmal_pipeline() const {
-    return camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI;
+    const auto* info = CameraRegistry::instance().get_camera_info(camera_type);
+    return info && info->requires_rpi_mmal_pipeline();
   }
   bool requires_rpi_libcamera_pipeline() const {
-    return camera_type >= 30 && camera_type < 60;
+    const auto* info = CameraRegistry::instance().get_camera_info(camera_type);
+    return info && info->requires_rpi_libcamera_pipeline();
   }
   bool requires_x20_cedar_pipeline() const {
-    return camera_type >= 70 && camera_type < 80;
+    const auto* info = CameraRegistry::instance().get_camera_info(camera_type);
+    return info && info->requires_x20_cedar_pipeline();
   }
   bool requires_rpi_veye_pipeline() const {
-    return camera_type >= 60 && camera_type < 70;
+    const auto* info = CameraRegistry::instance().get_camera_info(camera_type);
+    return info && info->requires_rpi_veye_pipeline();
   }
   bool x20_supports_basic_iq_params() const {
-    return requires_x20_cedar_pipeline() &&
-           camera_type != X_CAM_TYPE_X20_HDZERO_GENERIC;
+    const auto* info = CameraRegistry::instance().get_camera_info(camera_type);
+    return info && info->requires_x20_cedar_pipeline() && info->supports_iq_params();
   }
   bool requires_rockchip5_mpp_pipeline() const {
-    return camera_type >= 80 && camera_type < 90;
+    const auto* info = CameraRegistry::instance().get_camera_info(camera_type);
+    return info && info->requires_rockchip5_mpp_pipeline();
   }
   bool requires_rockchip3_mpp_pipeline() const {
-    return camera_type >= 90 && camera_type < 100;
+    const auto* info = CameraRegistry::instance().get_camera_info(camera_type);
+    return info && info->requires_rockchip3_mpp_pipeline();
   }
   bool requires_willy_pipeline() const {
-    return camera_type >= 122 && camera_type < 124;
+    const auto* info = CameraRegistry::instance().get_camera_info(camera_type);
+    return info && info->requires_willy_pipeline();
   }
   std::string cam_type_as_verbose_string() const {
     return x_cam_type_to_string(camera_type);
@@ -333,256 +223,8 @@ struct XCamera {
   // (In qopenhd, we have the experiment checkbox, where the user can enter
   // anything he likes)
   std::vector<ResolutionFramerate> get_supported_resolutions() const {
-    if (requires_rpi_veye_pipeline()) {
-      // Except one, all veye camera(s) only do 1080p30 -
-      if (camera_type == X_CAM_TYPE_RPI_V4L2_VEYE_CSIMX307) {
-        std::vector<ResolutionFramerate> ret;
-        ret.push_back(ResolutionFramerate{1280, 720, 60});
-        ret.push_back(ResolutionFramerate{1920, 1080, 30});
-        return ret;
-      } else {
-        return {ResolutionFramerate{1920, 1080, 30}};
-      }
-      return {ResolutionFramerate{1920, 1080, 30}};
-    } else if (requires_x20_cedar_pipeline()) {
-      // also easy, 720p60 only (for now)
-      return {ResolutionFramerate{1280, 720, 60}};
-    } else if (requires_willy_pipeline()) {
-      // also easy, 720p60 only (for now)
-      return {ResolutionFramerate{960, 720, 120}};
-    } else if (camera_type == X_CAM_TYPE_USB_INFIRAY) {
-      return {ResolutionFramerate{384, 292, 25}};
-    } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_T2) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{256, 192, 25});
-      ret.push_back(ResolutionFramerate{0, 0, 0});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_P2_PRO) {
-      return {ResolutionFramerate{256, 192, 25}};
-    } else if (camera_type == X_CAM_TYPE_USB_INFIRAY_X2) {
-      return {ResolutionFramerate{384, 292, 50}};
-    } else if (camera_type == X_CAM_TYPE_USB_FLIR_VUE) {
-      return {ResolutionFramerate{640, 512, 30}};
-    } else if (camera_type == X_CAM_TYPE_USB_FLIR_BOSON) {
-      return {ResolutionFramerate{640, 512, 60}};
-    } else if (camera_type == X_CAM_TYPE_USB_GENERIC) {
-      std::vector<ResolutionFramerate> ret;
-      // most likely working resolution
-      ret.push_back(ResolutionFramerate{640, 480, 30});
-      // auto is also a good choice on usb
-      ret.push_back(ResolutionFramerate{0, 0, 0});
-      return ret;
-    } else if (requires_rpi_libcamera_pipeline()) {
-      std::vector<ResolutionFramerate> ret;
-      if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462 ||
-          camera_type ==
-              X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX462_LOWLIGHT_MINI) {
-        ret.push_back(ResolutionFramerate{640, 480, 60});
-        ret.push_back(ResolutionFramerate{896, 504, 30});
-        ret.push_back(ResolutionFramerate{896, 504, 60});
-        ret.push_back(ResolutionFramerate{1280, 720, 30});
-        ret.push_back(ResolutionFramerate{1280, 720, 60});
-        ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      } else if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX477M ||
-                 camera_type == X_CAM_TYPE_RPI_LIBCAMERA_RPIF_HQ_IMX477) {
-        ret.push_back(ResolutionFramerate{640, 480, 50});
-        ret.push_back(ResolutionFramerate{896, 504, 50});
-        ret.push_back(ResolutionFramerate{1280, 720, 50});
-        ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      } else if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V2_IMX219) {
-        ret.push_back(ResolutionFramerate{640, 480, 47});
-        ret.push_back(ResolutionFramerate{896, 504, 47});
-        ret.push_back(ResolutionFramerate{1280, 720, 47});
-        ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      } else if (camera_type ==
-                 X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYVISIONPRO_IMX519) {
-        ret.push_back(ResolutionFramerate{640, 480, 60});
-        ret.push_back(ResolutionFramerate{896, 504, 60});
-        ret.push_back(ResolutionFramerate{1280, 720, 60});
-        ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      } else if (camera_type ==
-                     X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_SKYMASTERHDR_IMX708 ||
-                 camera_type == X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V3_IMX708) {
-        ret.push_back(ResolutionFramerate{640, 480, 60});
-        ret.push_back(ResolutionFramerate{896, 504, 60});
-        ret.push_back(ResolutionFramerate{1280, 720, 60});
-        ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      } else if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_ARDUCAM_IMX327) {
-        ret.push_back(ResolutionFramerate{640, 480, 60});
-        ret.push_back(ResolutionFramerate{896, 504, 60});
-        ret.push_back(ResolutionFramerate{1280, 720, 60});
-        ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      } else if (camera_type == X_CAM_TYPE_RPI_LIBCAMERA_RPIF_V1_OV5647) {
-        ret.push_back(ResolutionFramerate{1280, 720, 30});
-        ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      } else {
-        std::cerr << "Not yet mapped:" << camera_type << std::endl;
-        ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      }
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_RPI_MMAL_HDMI_TO_CSI) {
-      std::vector<ResolutionFramerate> ret;
-      // 720p60 is the most commonly used / works in a lot of scenarios
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 25});
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_DUMMY_SW) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{640, 480, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_DEVELOPMENT_FILESRC) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{848, 480, 60});
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1920, 1080, 60});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_5_IMX462) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 60});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_5_HDMI_IN) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 60});
-      ret.push_back(ResolutionFramerate{3840, 2160, 30});
-      ret.push_back(ResolutionFramerate{3840, 2160, 60});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_5_OV5647) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{640, 480, 60});
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_5_IMX219) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{640, 480, 30});
-      ret.push_back(ResolutionFramerate{848, 480, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_5_IMX708) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1920, 1080, 60});
-      ret.push_back(ResolutionFramerate{4608, 2592, 14});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_5_IMX415) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      ret.push_back(ResolutionFramerate{3864, 2192, 30});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_5_IMX477) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1920, 1080, 60});
-      ret.push_back(ResolutionFramerate{3840, 2160, 20});
-      ret.push_back(ResolutionFramerate{4056, 3040, 10});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_5_IMX519) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1920, 1080, 60});
-      ret.push_back(ResolutionFramerate{3840, 2160, 20});
-      ret.push_back(ResolutionFramerate{4056, 3040, 9});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_5_OHD_Jaguar) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 120});
-      ret.push_back(ResolutionFramerate{1920, 1080, 100});
-      ret.push_back(ResolutionFramerate{3840, 2160, 90});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_3_HDMI_IN) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_3_OV5647) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{640, 480, 60});
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_3_IMX219) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{640, 480, 30});
-      ret.push_back(ResolutionFramerate{848, 480, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_3_IMX708) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1920, 1080, 60});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_3_IMX462) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 60});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_3_IMX519) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 60});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_ROCK_3_OHD_Jaguar) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1280, 720, 120});
-      ret.push_back(ResolutionFramerate{1920, 1080, 60});
-      ret.push_back(ResolutionFramerate{1920, 1080, 100});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_NVIDIA_XAVIER_IMX577) {
-      std::vector<ResolutionFramerate> ret;
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      ret.push_back(ResolutionFramerate{1920, 1080, 60});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_QC_IMX577) {
-      std::vector<ResolutionFramerate> ret;
-      // very basic integration, driver is missing a lot of settings
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      ret.push_back(ResolutionFramerate{1920, 1080, 30});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_QC_OV9282) {
-      std::vector<ResolutionFramerate> ret;
-      // correct specs still missing
-      ret.push_back(ResolutionFramerate{1280, 720, 30});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_WILLY_HORNET) {
-      std::vector<ResolutionFramerate> ret;
-      // correct specs still missing
-      ret.push_back(ResolutionFramerate{960, 720, 120});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_WILLY_JAGUAR) {
-      std::vector<ResolutionFramerate> ret;
-      // correct specs still missing
-      ret.push_back(ResolutionFramerate{1280, 720, 120});
-      return ret;
-    } else if (camera_type == X_CAM_TYPE_WILLY_REKINDLE) {
-      std::vector<ResolutionFramerate> ret;
-      // correct specs still missing
-      ret.push_back(ResolutionFramerate{1280, 720, 60});
-      return ret;
-    } else {
-      // Not mapped yet
-      // return something that might work or might not work
-      return {ResolutionFramerate{640, 480, 30}};
-    }
+    // Use CameraRegistry for lookup - encapsulates resolution information
+    return CameraRegistry::instance().get_resolutions(camera_type);
   }
   // We default to the last supported resolution
   [[nodiscard]] ResolutionFramerate get_default_resolution_fps() const {
@@ -592,16 +234,20 @@ struct XCamera {
 };
 
 static bool is_rpi_csi_camera(int cam_type) {
-  return cam_type >= 20 && cam_type <= 69;
+  const auto* info = CameraRegistry::instance().get_camera_info(cam_type);
+  return info && info->is_rpi_csi_camera();
 }
 static bool is_rock_csi_camera(int cam_type) {
-  return cam_type >= 80 && cam_type <= 99;
+  const auto* info = CameraRegistry::instance().get_camera_info(cam_type);
+  return info && info->is_rock_csi_camera();
 }
 static bool is_willy_csi_camera(int cam_type) {
-  return cam_type >= 122 && cam_type <= 124;
+  const auto* info = CameraRegistry::instance().get_camera_info(cam_type);
+  return info && info->get_family() == CameraFamily::WILLY;
 }
 static bool is_usb_camera(int cam_type) {
-  return cam_type >= 10 && cam_type < 19;
+  const auto* info = CameraRegistry::instance().get_camera_info(cam_type);
+  return info && info->is_usb_camera();
 }
 
 static bool is_valid_primary_cam_type(int cam_type) {

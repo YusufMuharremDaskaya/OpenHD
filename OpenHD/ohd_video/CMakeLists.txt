@@ -27,6 +27,7 @@ add_compile_options(-Wno-address-of-packed-member -Wno-cast-align)
 
 set(sources
     src/ohd_video_ground.cpp
+    src/camera_info.cpp
     #src/gst_recorder.cpp
     #src/gst_recording_demuxer.cpp
 )
